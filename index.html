@@ -102,15 +102,15 @@ img.map:hover {
   display: none;
   align-items: center;
   justify-content: center;
-  overflow: auto;
   z-index: 1000;
+  overflow: hidden;
 }
 #overlay img {
   width: 2500px;
   height: 1500px;
   display: block;
-  margin: auto;
   cursor: grab;
+  user-select: none;
 }
 #closeOverlay {
   position: fixed;
@@ -126,7 +126,7 @@ img.map:hover {
   color: #ff5050;
 }
 
-/* Dark/Light Mode Toggle */
+/* Toggle */
 .toggle-container {
   position: fixed;
   top: 15px;
@@ -162,7 +162,6 @@ img.map:hover {
 <div class="container">
   <h1>PBO Halloween Map and Spawns</h1>
 
-  <!-- Filter 1: Location -->
   <div class="card">
     <h2>Filter by Location</h2>
     <select id="locationSelect">
@@ -172,7 +171,6 @@ img.map:hover {
     <div id="locationResult"></div>
   </div>
 
-  <!-- Filter 2: Pokemon -->
   <div class="card">
     <h2>Filter by Pokemon</h2>
     <select id="pokemonSelect">
@@ -182,7 +180,6 @@ img.map:hover {
     <div id="pokemonResult"></div>
   </div>
 
-  <!-- Map -->
   <div class="card" style="text-align:center;">
     <h2>Event Map</h2>
     <img src="https://i.imgur.com/EyUirUa.png" alt="Event Map" class="map" id="mapImage">
@@ -191,10 +188,9 @@ img.map:hover {
   <div class="footer">@CloudNine</div>
 </div>
 
-<!-- Overlay -->
 <div id="overlay">
   <span id="closeOverlay">&times;</span>
-  <img src="https://i.imgur.com/EyUirUa.png" alt="Full Map">
+  <img src="https://i.imgur.com/EyUirUa.png" alt="Full Map" id="overlayMap">
 </div>
 
 <script>
@@ -213,7 +209,7 @@ fetch(sheetUrl)
   .then(res => res.text())
   .then(txt => {
     const rows = txt.split("\n").map(r => r.split(","));
-    const header = rows.shift();
+    rows.shift();
     data = rows.map(r => ({ A: r[0]?.trim(), B: r[1]?.trim() }));
     populateSelectors();
   });
@@ -221,20 +217,18 @@ fetch(sheetUrl)
 function populateSelectors() {
   const locSet = [...new Set(data.map(r => r.A))];
   const pokSet = [...new Set(data.map(r => r.B))];
-
   const locSelect = document.getElementById("locationSelect");
-  locSet.forEach(l => {
-    const opt = document.createElement("option");
-    opt.value = l; opt.textContent = l;
-    locSelect.appendChild(opt);
-  });
-
   const pokSelect = document.getElementById("pokemonSelect");
-  pokSet.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p; opt.textContent = p;
-    pokSelect.appendChild(opt);
-  });
+  locSet.forEach(l => locSelect.add(new Option(l, l)));
+  pokSet.forEach(p => pokSelect.add(new Option(p, p)));
+}
+
+function displayTable(rows, targetId) {
+  if (!rows.length) return;
+  let html = "<table><tr><th>Location</th><th>Pokemon</th></tr>";
+  rows.forEach(r => { html += `<tr><td>${r.A}</td><td>${r.B}</td></tr>`; });
+  html += "</table>";
+  document.getElementById(targetId).innerHTML = html;
 }
 
 document.getElementById("locationSelect").addEventListener("change", e => {
@@ -247,71 +241,71 @@ document.getElementById("pokemonSelect").addEventListener("change", e => {
   const filtered = data.filter(r => r.B === val);
   displayTable(filtered, "pokemonResult");
 });
-document.getElementById("resetLocation").addEventListener("click", () => {
+document.getElementById("resetLocation").onclick = () => {
   document.getElementById("locationSelect").value = "";
   document.getElementById("locationResult").innerHTML = "";
-});
-document.getElementById("resetPokemon").addEventListener("click", () => {
+};
+document.getElementById("resetPokemon").onclick = () => {
   document.getElementById("pokemonSelect").value = "";
   document.getElementById("pokemonResult").innerHTML = "";
-});
+};
 
-function displayTable(rows, targetId) {
-  if (!rows.length) return;
-  let html = "<table><tr><th>Location</th><th>Pokemon</th></tr>";
-  rows.forEach(r => {
-    html += `<tr><td>${r.A}</td><td>${r.B}</td></tr>`;
-  });
-  html += "</table>";
-  document.getElementById(targetId).innerHTML = html;
-}
-
-// Image overlay
+// Overlay logic
 const overlay = document.getElementById("overlay");
-const overlayImg = overlay.querySelector("img");
+const overlayImg = document.getElementById("overlayMap");
+const closeBtn = document.getElementById("closeOverlay");
 const mapImg = document.getElementById("mapImage");
-const closeOverlay = document.getElementById("closeOverlay");
 
-mapImg.addEventListener("click", () => { overlay.style.display = "flex"; });
-closeOverlay.addEventListener("click", () => { overlay.style.display = "none"; });
+mapImg.addEventListener("click", () => overlay.style.display = "flex");
+closeBtn.addEventListener("click", () => overlay.style.display = "none");
 overlay.addEventListener("click", e => { if (e.target === overlay) overlay.style.display = "none"; });
 
-// Move image inside overlay
-let isDown = false, startX, startY, scrollLeft, scrollTop;
-overlayImg.addEventListener('mousedown', e => {
-  isDown = true;
-  overlayImg.style.cursor = 'grabbing';
-  startX = e.pageX - overlay.scrollLeft;
-  startY = e.pageY - overlay.scrollTop;
-  scrollLeft = overlay.scrollLeft;
-  scrollTop = overlay.scrollTop;
-});
-overlayImg.addEventListener('mouseleave', () => { isDown = false; overlayImg.style.cursor = 'grab'; });
-overlayImg.addEventListener('mouseup', () => { isDown = false; overlayImg.style.cursor = 'grab'; });
-overlayImg.addEventListener('mousemove', e => {
-  if (!isDown) return;
+// drag-to-pan logic
+let isDragging = false, startX, startY, scrollX = 0, scrollY = 0;
+let offsetX = 0, offsetY = 0;
+
+function startDrag(e) {
   e.preventDefault();
-  const x = e.pageX - startX;
-  const y = e.pageY - startY;
-  overlay.scrollLeft = scrollLeft - x;
-  overlay.scrollTop = scrollTop - y;
-});
-// Touch
-overlayImg.addEventListener('touchstart', e => {
-  isDown = true;
-  startX = e.touches[0].pageX - overlay.scrollLeft;
-  startY = e.touches[0].pageY - overlay.scrollTop;
-  scrollLeft = overlay.scrollLeft;
-  scrollTop = overlay.scrollTop;
+  isDragging = true;
+  overlayImg.style.cursor = "grabbing";
+  startX = e.pageX - offsetX;
+  startY = e.pageY - offsetY;
+}
+
+function onDrag(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  offsetX = e.pageX - startX;
+  offsetY = e.pageY - startY;
+  overlayImg.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+}
+
+function endDrag() {
+  isDragging = false;
+  overlayImg.style.cursor = "grab";
+}
+
+// Mouse events
+overlayImg.addEventListener("mousedown", startDrag);
+overlayImg.addEventListener("mousemove", onDrag);
+overlayImg.addEventListener("mouseup", endDrag);
+overlayImg.addEventListener("mouseleave", endDrag);
+
+// Touch events
+overlayImg.addEventListener("touchstart", e => {
+  const t = e.touches[0];
+  isDragging = true;
+  startX = t.pageX - offsetX;
+  startY = t.pageY - offsetY;
 }, { passive: true });
-overlayImg.addEventListener('touchend', () => isDown = false);
-overlayImg.addEventListener('touchmove', e => {
-  if (!isDown) return;
-  const x = e.touches[0].pageX - startX;
-  const y = e.touches[0].pageY - startY;
-  overlay.scrollLeft = scrollLeft - x;
-  overlay.scrollTop = scrollTop - y;
+overlayImg.addEventListener("touchmove", e => {
+  if (!isDragging) return;
+  const t = e.touches[0];
+  offsetX = t.pageX - startX;
+  offsetY = t.pageY - startY;
+  overlayImg.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
 }, { passive: true });
+overlayImg.addEventListener("touchend", endDrag);
 </script>
 </body>
 </html>
