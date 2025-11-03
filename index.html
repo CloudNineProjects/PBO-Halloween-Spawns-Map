@@ -5,202 +5,313 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PBO Halloween Map and Spawns</title>
 <style>
+:root {
+  --bg-light: #666769;
+  --bg-dark: #1A252C;
+  --card-light: #026503;
+  --card-dark: #023804;
+  --text-light: #000;
+  --text-dark: #fff;
+  --btn-bg: #F0F0F0;
+  --btn-text: #000;
+}
 body {
   font-family: Arial, sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-light);
   margin: 0;
-  background-color: #666769;
-  color: #fff;
-  transition: background 0.3s, color 0.3s;
+  padding: 0;
+  transition: background-color 0.3s, color 0.3s;
 }
-.dark-mode { background-color: #1A252C; color: #fff; }
-
-#toggleMode {
-  position: fixed;
-  top: 15px;
-  right: 15px;
-  background: #f0f0f0;
-  color: #000;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 14px;
-  cursor: pointer;
-  font-size: 14px;
-  z-index: 1000;
+.dark-mode {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
 }
-.dark-mode #toggleMode { background: #444; color: #fff; }
-
 .container {
   max-width: 900px;
-  margin: 80px auto 40px;
+  margin: 40px auto;
   padding: 20px;
 }
-
 .card {
-  background-color: #026503;
+  background-color: var(--card-light);
+  color: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 15px 20px;
   margin-bottom: 20px;
-  transition: background 0.3s;
+  transition: background-color 0.3s;
 }
-.dark-mode .card { background-color: #023804; }
-
-select, button {
-  padding: 8px;
-  margin: 5px 0;
-  border-radius: 8px;
+.dark-mode .card {
+  background-color: var(--card-dark);
+}
+h1 {
+  text-align: center;
+  color: white;
+  margin-bottom: 20px;
+}
+button, select {
+  padding: 8px 12px;
   border: none;
-  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-top: 5px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
 }
-select { width: 100%; }
-button { cursor: pointer; background: #f0f0f0; color: #000; }
-.dark-mode button { background: #444; color: #fff; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-th { background: rgba(255,255,255,0.2); }
-.dark-mode th { background: rgba(0,0,0,0.3); }
-
-.map-container { text-align: center; margin-top: 20px; }
-.map-container img {
+.dark-mode button, .dark-mode select {
+  background: #000;
+  color: white;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  color: black;
+  border-radius: 8px;
+  overflow: hidden;
+}
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.dark-mode table {
+  background: #111;
+  color: white;
+}
+img.map {
+  display: block;
+  margin: 20px auto;
   width: 80%;
-  max-width: 600px;
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.3s;
 }
-.map-container img:hover { transform: scale(1.02); }
+img.map:hover {
+  transform: scale(1.02);
+}
 
-/* 🔹 Overlay für Vollbildkarte */
+/* Overlay */
 #overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0,0,0,0.85);
   display: none;
-  justify-content: center;
   align-items: center;
-  z-index: 999;
+  justify-content: center;
+  overflow: auto;
+  z-index: 1000;
 }
 #overlay img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 12px;
+  width: 2500px;
+  height: 1500px;
+  display: block;
+  margin: auto;
+  cursor: grab;
 }
-#overlay span {
-  position: absolute;
+#closeOverlay {
+  position: fixed;
   top: 20px;
-  right: 30px;
+  right: 35px;
   font-size: 32px;
+  font-weight: bold;
   color: white;
   cursor: pointer;
+  z-index: 1001;
+}
+#closeOverlay:hover {
+  color: #ff5050;
 }
 
+/* Dark/Light Mode Toggle */
+.toggle-container {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  z-index: 2000;
+}
+.toggle-btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.dark-mode .toggle-btn {
+  background-color: #000;
+  color: white;
+}
 .footer {
   text-align: center;
-  margin-top: 40px;
-  font-weight: bold;
-  opacity: 0.7;
+  color: white;
+  margin-top: 20px;
 }
 </style>
 </head>
 <body>
-<button id="toggleMode">🌙 Dark Mode</button>
+
+<div class="toggle-container">
+  <button id="toggleMode" class="toggle-btn">🌙 Dark Mode</button>
+</div>
 
 <div class="container">
-  <h1 style="text-align:center;">🎃 PBO Halloween Map and Spawns 🎃</h1>
+  <h1>PBO Halloween Map and Spawns</h1>
 
+  <!-- Filter 1: Location -->
   <div class="card">
     <h2>Filter by Location</h2>
-    <select id="locationSelect"><option value="">Select a Location</option></select>
+    <select id="locationSelect">
+      <option value="">Select Location</option>
+    </select>
     <button id="resetLocation">Reset</button>
     <div id="locationResult"></div>
   </div>
 
+  <!-- Filter 2: Pokemon -->
   <div class="card">
-    <h2>Filter by Pokémon</h2>
-    <select id="pokemonSelect"><option value="">Select a Pokémon</option></select>
+    <h2>Filter by Pokemon</h2>
+    <select id="pokemonSelect">
+      <option value="">Select Pokemon</option>
+    </select>
     <button id="resetPokemon">Reset</button>
     <div id="pokemonResult"></div>
   </div>
 
-  <div class="card map-container">
+  <!-- Map -->
+  <div class="card" style="text-align:center;">
     <h2>Event Map</h2>
-    <img id="eventMap" src="https://i.imgur.com/EyUirUa.png" alt="Event Map">
+    <img src="https://i.imgur.com/EyUirUa.png" alt="Event Map" class="map" id="mapImage">
   </div>
 
   <div class="footer">@CloudNine</div>
 </div>
 
-<!-- 🔹 Overlay-Element -->
+<!-- Overlay -->
 <div id="overlay">
   <span id="closeOverlay">&times;</span>
-  <img src="" alt="Full Map" id="overlayImg">
+  <img src="https://i.imgur.com/EyUirUa.png" alt="Full Map">
 </div>
 
 <script>
+const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQuUm2mMu9Z1cGLJpXoIK09t39JVFCiAJBRCwRIaGw6gPWQ9_JmyUPQObmZyKYrugeD82Hgz4_wbrsa/pub?output=csv";
 let data = [];
 
-async function loadData() {
-  const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQuUm2mMu9Z1cGLJpXoIK09t39JVFCiAJBRCwRIaGw6gPWQ9_JmyUPQObmZyKYrugeD82Hgz4_wbrsa/pub?output=csv';
-  const res = await fetch(url);
-  const text = await res.text();
-  const rows = text.trim().split('\n').map(r => r.split(','));
-  rows.shift();
-  data = rows.map(r => ({ location: r[0].trim(), spawn: r[1]?.trim() || '' }));
-  populateFilters();
+// Dark Mode toggle
+const toggleBtn = document.getElementById("toggleMode");
+toggleBtn.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  toggleBtn.textContent = document.body.classList.contains("dark-mode") ? "☀️ Light Mode" : "🌙 Dark Mode";
+});
+
+// Load CSV
+fetch(sheetUrl)
+  .then(res => res.text())
+  .then(txt => {
+    const rows = txt.split("\n").map(r => r.split(","));
+    const header = rows.shift();
+    data = rows.map(r => ({ A: r[0]?.trim(), B: r[1]?.trim() }));
+    populateSelectors();
+  });
+
+function populateSelectors() {
+  const locSet = [...new Set(data.map(r => r.A))];
+  const pokSet = [...new Set(data.map(r => r.B))];
+
+  const locSelect = document.getElementById("locationSelect");
+  locSet.forEach(l => {
+    const opt = document.createElement("option");
+    opt.value = l; opt.textContent = l;
+    locSelect.appendChild(opt);
+  });
+
+  const pokSelect = document.getElementById("pokemonSelect");
+  pokSet.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p; opt.textContent = p;
+    pokSelect.appendChild(opt);
+  });
 }
 
-function populateFilters() {
-  const locSet = [...new Set(data.map(d => d.location))].sort();
-  const pokSet = [...new Set(data.map(d => d.spawn))].sort();
-  const locSel = document.getElementById('locationSelect');
-  const pokSel = document.getElementById('pokemonSelect');
+document.getElementById("locationSelect").addEventListener("change", e => {
+  const val = e.target.value;
+  const filtered = data.filter(r => r.A === val);
+  displayTable(filtered, "locationResult");
+});
+document.getElementById("pokemonSelect").addEventListener("change", e => {
+  const val = e.target.value;
+  const filtered = data.filter(r => r.B === val);
+  displayTable(filtered, "pokemonResult");
+});
+document.getElementById("resetLocation").addEventListener("click", () => {
+  document.getElementById("locationSelect").value = "";
+  document.getElementById("locationResult").innerHTML = "";
+});
+document.getElementById("resetPokemon").addEventListener("click", () => {
+  document.getElementById("pokemonSelect").value = "";
+  document.getElementById("pokemonResult").innerHTML = "";
+});
 
-  locSet.forEach(l => locSel.add(new Option(l, l)));
-  pokSet.forEach(p => pokSel.add(new Option(p, p)));
+function displayTable(rows, targetId) {
+  if (!rows.length) return;
+  let html = "<table><tr><th>Location</th><th>Pokemon</th></tr>";
+  rows.forEach(r => {
+    html += `<tr><td>${r.A}</td><td>${r.B}</td></tr>`;
+  });
+  html += "</table>";
+  document.getElementById(targetId).innerHTML = html;
 }
 
-function renderTable(filterKey, value) {
-  const target = filterKey === 'location' ? 'locationResult' : 'pokemonResult';
-  const div = document.getElementById(target);
-  if (!value) return div.innerHTML = '';
-  const filtered = data.filter(d => d[filterKey] === value);
-  if (!filtered.length) return div.innerHTML = '<p>No results found.</p>';
-  let html = '<table><tr><th>Location</th><th>Pokémon</th></tr>';
-  filtered.forEach(r => html += `<tr><td>${r.location}</td><td>${r.spawn}</td></tr>`);
-  div.innerHTML = html + '</table>';
-}
+// Image overlay
+const overlay = document.getElementById("overlay");
+const overlayImg = overlay.querySelector("img");
+const mapImg = document.getElementById("mapImage");
+const closeOverlay = document.getElementById("closeOverlay");
 
-document.getElementById('locationSelect').addEventListener('change', e => renderTable('location', e.target.value));
-document.getElementById('pokemonSelect').addEventListener('change', e => renderTable('spawn', e.target.value));
-document.getElementById('resetLocation').addEventListener('click', () => {
-  document.getElementById('locationSelect').value = '';
-  document.getElementById('locationResult').innerHTML = '';
-});
-document.getElementById('resetPokemon').addEventListener('click', () => {
-  document.getElementById('pokemonSelect').value = '';
-  document.getElementById('pokemonResult').innerHTML = '';
-});
+mapImg.addEventListener("click", () => { overlay.style.display = "flex"; });
+closeOverlay.addEventListener("click", () => { overlay.style.display = "none"; });
+overlay.addEventListener("click", e => { if (e.target === overlay) overlay.style.display = "none"; });
 
-// 🔹 Overlay Logik für Bildvergrößerung
-const overlay = document.getElementById('overlay');
-const overlayImg = document.getElementById('overlayImg');
-const closeBtn = document.getElementById('closeOverlay');
-document.getElementById('eventMap').addEventListener('click', () => {
-  overlay.style.display = 'flex';
-  overlayImg.src = 'https://i.imgur.com/EyUirUa.png';
+// Move image inside overlay
+let isDown = false, startX, startY, scrollLeft, scrollTop;
+overlayImg.addEventListener('mousedown', e => {
+  isDown = true;
+  overlayImg.style.cursor = 'grabbing';
+  startX = e.pageX - overlay.scrollLeft;
+  startY = e.pageY - overlay.scrollTop;
+  scrollLeft = overlay.scrollLeft;
+  scrollTop = overlay.scrollTop;
 });
-closeBtn.addEventListener('click', () => overlay.style.display = 'none');
-overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
-
-// 🔹 Dark/Light Mode
-const toggle = document.getElementById('toggleMode');
-toggle.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-  toggle.textContent = document.body.classList.contains('dark-mode') ? '☀️ Light Mode' : '🌙 Dark Mode';
+overlayImg.addEventListener('mouseleave', () => { isDown = false; overlayImg.style.cursor = 'grab'; });
+overlayImg.addEventListener('mouseup', () => { isDown = false; overlayImg.style.cursor = 'grab'; });
+overlayImg.addEventListener('mousemove', e => {
+  if (!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - startX;
+  const y = e.pageY - startY;
+  overlay.scrollLeft = scrollLeft - x;
+  overlay.scrollTop = scrollTop - y;
 });
-
-loadData();
+// Touch
+overlayImg.addEventListener('touchstart', e => {
+  isDown = true;
+  startX = e.touches[0].pageX - overlay.scrollLeft;
+  startY = e.touches[0].pageY - overlay.scrollTop;
+  scrollLeft = overlay.scrollLeft;
+  scrollTop = overlay.scrollTop;
+}, { passive: true });
+overlayImg.addEventListener('touchend', () => isDown = false);
+overlayImg.addEventListener('touchmove', e => {
+  if (!isDown) return;
+  const x = e.touches[0].pageX - startX;
+  const y = e.touches[0].pageY - startY;
+  overlay.scrollLeft = scrollLeft - x;
+  overlay.scrollTop = scrollTop - y;
+}, { passive: true });
 </script>
 </body>
 </html>
