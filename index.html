@@ -12,10 +12,7 @@ body {
   color: #fff;
   transition: background 0.3s, color 0.3s;
 }
-.dark-mode {
-  background-color: #1A252C;
-  color: #fff;
-}
+.dark-mode { background-color: #1A252C; color: #fff; }
 
 #toggleMode {
   position: fixed;
@@ -30,10 +27,7 @@ body {
   font-size: 14px;
   z-index: 1000;
 }
-.dark-mode #toggleMode {
-  background: #444;
-  color: #fff;
-}
+.dark-mode #toggleMode { background: #444; color: #fff; }
 
 .container {
   max-width: 900px;
@@ -48,9 +42,7 @@ body {
   margin-bottom: 20px;
   transition: background 0.3s;
 }
-.dark-mode .card {
-  background-color: #023804;
-}
+.dark-mode .card { background-color: #023804; }
 
 select, button {
   padding: 8px;
@@ -59,40 +51,16 @@ select, button {
   border: none;
   font-size: 14px;
 }
-select {
-  width: 100%;
-}
-button {
-  cursor: pointer;
-  background: #f0f0f0;
-  color: #000;
-}
-.dark-mode button {
-  background: #444;
-  color: #fff;
-}
+select { width: 100%; }
+button { cursor: pointer; background: #f0f0f0; color: #000; }
+.dark-mode button { background: #444; color: #fff; }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 6px;
-  text-align: left;
-}
-th {
-  background: rgba(255,255,255,0.2);
-}
-.dark-mode th {
-  background: rgba(0,0,0,0.3);
-}
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+th { background: rgba(255,255,255,0.2); }
+.dark-mode th { background: rgba(0,0,0,0.3); }
 
-.map-container {
-  text-align: center;
-  margin-top: 20px;
-}
+.map-container { text-align: center; margin-top: 20px; }
 .map-container img {
   width: 80%;
   max-width: 600px;
@@ -100,8 +68,31 @@ th {
   cursor: pointer;
   transition: transform 0.3s;
 }
-.map-container img:hover {
-  transform: scale(1.03);
+.map-container img:hover { transform: scale(1.02); }
+
+/* 🔹 Overlay für Vollbildkarte */
+#overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+#overlay img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 12px;
+}
+#overlay span {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 32px;
+  color: white;
+  cursor: pointer;
 }
 
 .footer {
@@ -120,18 +111,14 @@ th {
 
   <div class="card">
     <h2>Filter by Location</h2>
-    <select id="locationSelect">
-      <option value="">Select a Location</option>
-    </select>
+    <select id="locationSelect"><option value="">Select a Location</option></select>
     <button id="resetLocation">Reset</button>
     <div id="locationResult"></div>
   </div>
 
   <div class="card">
     <h2>Filter by Pokémon</h2>
-    <select id="pokemonSelect">
-      <option value="">Select a Pokémon</option>
-    </select>
+    <select id="pokemonSelect"><option value="">Select a Pokémon</option></select>
     <button id="resetPokemon">Reset</button>
     <div id="pokemonResult"></div>
   </div>
@@ -144,6 +131,12 @@ th {
   <div class="footer">@CloudNine</div>
 </div>
 
+<!-- 🔹 Overlay-Element -->
+<div id="overlay">
+  <span id="closeOverlay">&times;</span>
+  <img src="" alt="Full Map" id="overlayImg">
+</div>
+
 <script>
 let data = [];
 
@@ -152,58 +145,34 @@ async function loadData() {
   const res = await fetch(url);
   const text = await res.text();
   const rows = text.trim().split('\n').map(r => r.split(','));
-  const headers = rows.shift();
+  rows.shift();
   data = rows.map(r => ({ location: r[0].trim(), spawn: r[1]?.trim() || '' }));
-
   populateFilters();
 }
 
 function populateFilters() {
   const locSet = [...new Set(data.map(d => d.location))].sort();
   const pokSet = [...new Set(data.map(d => d.spawn))].sort();
-
   const locSel = document.getElementById('locationSelect');
   const pokSel = document.getElementById('pokemonSelect');
 
-  locSet.forEach(l => {
-    const opt = document.createElement('option');
-    opt.value = l;
-    opt.textContent = l;
-    locSel.appendChild(opt);
-  });
-  pokSet.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p;
-    opt.textContent = p;
-    pokSel.appendChild(opt);
-  });
+  locSet.forEach(l => locSel.add(new Option(l, l)));
+  pokSet.forEach(p => pokSel.add(new Option(p, p)));
 }
 
 function renderTable(filterKey, value) {
-  const resultDiv = filterKey === 'location' ? document.getElementById('locationResult') : document.getElementById('pokemonResult');
-  if (!value) {
-    resultDiv.innerHTML = '';
-    return;
-  }
+  const target = filterKey === 'location' ? 'locationResult' : 'pokemonResult';
+  const div = document.getElementById(target);
+  if (!value) return div.innerHTML = '';
   const filtered = data.filter(d => d[filterKey] === value);
-  if (!filtered.length) {
-    resultDiv.innerHTML = '<p>No results found.</p>';
-    return;
-  }
+  if (!filtered.length) return div.innerHTML = '<p>No results found.</p>';
   let html = '<table><tr><th>Location</th><th>Pokémon</th></tr>';
-  filtered.forEach(r => {
-    html += `<tr><td>${r.location}</td><td>${r.spawn}</td></tr>`;
-  });
-  html += '</table>';
-  resultDiv.innerHTML = html;
+  filtered.forEach(r => html += `<tr><td>${r.location}</td><td>${r.spawn}</td></tr>`);
+  div.innerHTML = html + '</table>';
 }
 
-document.getElementById('locationSelect').addEventListener('change', e => {
-  renderTable('location', e.target.value);
-});
-document.getElementById('pokemonSelect').addEventListener('change', e => {
-  renderTable('spawn', e.target.value);
-});
+document.getElementById('locationSelect').addEventListener('change', e => renderTable('location', e.target.value));
+document.getElementById('pokemonSelect').addEventListener('change', e => renderTable('spawn', e.target.value));
 document.getElementById('resetLocation').addEventListener('click', () => {
   document.getElementById('locationSelect').value = '';
   document.getElementById('locationResult').innerHTML = '';
@@ -213,25 +182,22 @@ document.getElementById('resetPokemon').addEventListener('click', () => {
   document.getElementById('pokemonResult').innerHTML = '';
 });
 
-// map enlarge
-document.getElementById('eventMap').addEventListener('click', e => {
-  const img = e.target;
-  if (img.style.width === '100%') {
-    img.style.width = '80%';
-  } else {
-    img.style.width = '100%';
-  }
+// 🔹 Overlay Logik für Bildvergrößerung
+const overlay = document.getElementById('overlay');
+const overlayImg = document.getElementById('overlayImg');
+const closeBtn = document.getElementById('closeOverlay');
+document.getElementById('eventMap').addEventListener('click', () => {
+  overlay.style.display = 'flex';
+  overlayImg.src = 'https://i.imgur.com/EyUirUa.png';
 });
+closeBtn.addEventListener('click', () => overlay.style.display = 'none');
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
 
-// toggle dark/light
+// 🔹 Dark/Light Mode
 const toggle = document.getElementById('toggleMode');
 toggle.addEventListener('click', () => {
   document.body.classList.toggle('dark-mode');
-  if (document.body.classList.contains('dark-mode')) {
-    toggle.textContent = '☀️ Light Mode';
-  } else {
-    toggle.textContent = '🌙 Dark Mode';
-  }
+  toggle.textContent = document.body.classList.contains('dark-mode') ? '☀️ Light Mode' : '🌙 Dark Mode';
 });
 
 loadData();
