@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBO Halloween Map and Spawns</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #666769;
+  color: #fff;
+  transition: background 0.3s, color 0.3s;
+}
+.dark-mode {
+  background-color: #1A252C;
+  color: #fff;
+}
+
+#toggleMode {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: #f0f0f0;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 1000;
+}
+.dark-mode #toggleMode {
+  background: #444;
+  color: #fff;
+}
+
+.container {
+  max-width: 900px;
+  margin: 80px auto 40px;
+  padding: 20px;
+}
+
+.card {
+  background-color: #026503;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: background 0.3s;
+}
+.dark-mode .card {
+  background-color: #023804;
+}
+
+select, button {
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+}
+select {
+  width: 100%;
+}
+button {
+  cursor: pointer;
+  background: #f0f0f0;
+  color: #000;
+}
+.dark-mode button {
+  background: #444;
+  color: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: left;
+}
+th {
+  background: rgba(255,255,255,0.2);
+}
+.dark-mode th {
+  background: rgba(0,0,0,0.3);
+}
+
+.map-container {
+  text-align: center;
+  margin-top: 20px;
+}
+.map-container img {
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.map-container img:hover {
+  transform: scale(1.03);
+}
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  font-weight: bold;
+  opacity: 0.7;
+}
+</style>
+</head>
+<body>
+<button id="toggleMode">🌙 Dark Mode</button>
+
+<div class="container">
+  <h1 style="text-align:center;">🎃 PBO Halloween Map and Spawns 🎃</h1>
+
+  <div class="card">
+    <h2>Filter by Location</h2>
+    <select id="locationSelect">
+      <option value="">Select a Location</option>
+    </select>
+    <button id="resetLocation">Reset</button>
+    <div id="locationResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>Filter by Pokémon</h2>
+    <select id="pokemonSelect">
+      <option value="">Select a Pokémon</option>
+    </select>
+    <button id="resetPokemon">Reset</button>
+    <div id="pokemonResult"></div>
+  </div>
+
+  <div class="card map-container">
+    <h2>Event Map</h2>
+    <img id="eventMap" src="https://i.imgur.com/EyUirUa.png" alt="Event Map">
+  </div>
+
+  <div class="footer">@CloudNine</div>
+</div>
+
+<script>
+let data = [];
+
+async function loadData() {
+  const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQuUm2mMu9Z1cGLJpXoIK09t39JVFCiAJBRCwRIaGw6gPWQ9_JmyUPQObmZyKYrugeD82Hgz4_wbrsa/pub?output=csv';
+  const res = await fetch(url);
+  const text = await res.text();
+  const rows = text.trim().split('\n').map(r => r.split(','));
+  const headers = rows.shift();
+  data = rows.map(r => ({ location: r[0].trim(), spawn: r[1]?.trim() || '' }));
+
+  populateFilters();
+}
+
+function populateFilters() {
+  const locSet = [...new Set(data.map(d => d.location))].sort();
+  const pokSet = [...new Set(data.map(d => d.spawn))].sort();
+
+  const locSel = document.getElementById('locationSelect');
+  const pokSel = document.getElementById('pokemonSelect');
+
+  locSet.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l;
+    opt.textContent = l;
+    locSel.appendChild(opt);
+  });
+  pokSet.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    pokSel.appendChild(opt);
+  });
+}
+
+function renderTable(filterKey, value) {
+  const resultDiv = filterKey === 'location' ? document.getElementById('locationResult') : document.getElementById('pokemonResult');
+  if (!value) {
+    resultDiv.innerHTML = '';
+    return;
+  }
+  const filtered = data.filter(d => d[filterKey] === value);
+  if (!filtered.length) {
+    resultDiv.innerHTML = '<p>No results found.</p>';
+    return;
+  }
+  let html = '<table><tr><th>Location</th><th>Pokémon</th></tr>';
+  filtered.forEach(r => {
+    html += `<tr><td>${r.location}</td><td>${r.spawn}</td></tr>`;
+  });
+  html += '</table>';
+  resultDiv.innerHTML = html;
+}
+
+document.getElementById('locationSelect').addEventListener('change', e => {
+  renderTable('location', e.target.value);
+});
+document.getElementById('pokemonSelect').addEventListener('change', e => {
+  renderTable('spawn', e.target.value);
+});
+document.getElementById('resetLocation').addEventListener('click', () => {
+  document.getElementById('locationSelect').value = '';
+  document.getElementById('locationResult').innerHTML = '';
+});
+document.getElementById('resetPokemon').addEventListener('click', () => {
+  document.getElementById('pokemonSelect').value = '';
+  document.getElementById('pokemonResult').innerHTML = '';
+});
+
+// map enlarge
+document.getElementById('eventMap').addEventListener('click', e => {
+  const img = e.target;
+  if (img.style.width === '100%') {
+    img.style.width = '80%';
+  } else {
+    img.style.width = '100%';
+  }
+});
+
+// toggle dark/light
+const toggle = document.getElementById('toggleMode');
+toggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  if (document.body.classList.contains('dark-mode')) {
+    toggle.textContent = '☀️ Light Mode';
+  } else {
+    toggle.textContent = '🌙 Dark Mode';
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>
